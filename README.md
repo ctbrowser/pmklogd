@@ -69,7 +69,7 @@ You will need to use <tt>sudo</tt> if you did not specify <tt>WEBOS\_INSTALL\_RO
 
 All content, including all source code files and documentation files in this repository are:
 
- Copyright (c) 2008-2012 Hewlett-Packard Development Company, L.P.
+ Copyright (c) 2008-2013 LG Electronics, Inc.
 
 All content, including all source code files and documentation files in this repository are:
 Licensed under the Apache License, Version 2.0 (the "License");
