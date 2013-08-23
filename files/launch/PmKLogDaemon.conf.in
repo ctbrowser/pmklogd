@@ -18,7 +18,7 @@
 
 description "@WEBOS_PROJECT_SUMMARY@"
 
-start on stopped mountall
+start on stopped mount-readwrite
 
 respawn
 
