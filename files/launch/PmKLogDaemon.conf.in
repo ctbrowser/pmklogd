@@ -25,6 +25,4 @@ respawn
 # Comment this line out to suppress logs on the console
 #console output
 
-script
-	@WEBOS_INSTALL_SBINDIR@/PmKLogDaemon -n -d 1
-end script
+exec @WEBOS_INSTALL_SBINDIR@/PmKLogDaemon -n -d 1
