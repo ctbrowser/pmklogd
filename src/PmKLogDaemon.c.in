@@ -48,37 +48,37 @@
 
 #include "PmKLogDaemon.h"
 
-#define PMLOGDAEMON_LOG_KERN	(LOG_NFACILITIES<<3)
+#define PMLOGDAEMON_LOG_KERN    (LOG_NFACILITIES<<3)
 
 
 /* private constants */
 
-#define PMKLOGD_NAME			"pmklogd"
+#define PMKLOGD_NAME            "pmklogd"
 
 /* see LOG_BUF_LEN / CONFIG_LOG_BUF_SHIFT in printk.c */
-#define KLOG_BUFFER_SIZE		4096
-#define KLOG_MAX_LINE_LEN		1000
+#define KLOG_BUFFER_SIZE        4096
+#define KLOG_MAX_LINE_LEN       1000
 
 /* see printk.c DEFAULT_MESSAGE_LOGLEVEL */
-#define KLOG_DEFAULT_PRIORITY	LOG_WARNING
+#define KLOG_DEFAULT_PRIORITY   LOG_WARNING
 
 
 /* status codes */
 enum
 {
-	RESULT_OK,
-	RESULT_RUN_ERR,
-	RESULT_PARAM_ERR,
-	RESULT_HELP
+    RESULT_OK,
+    RESULT_RUN_ERR,
+    RESULT_PARAM_ERR,
+    RESULT_HELP
 };
 
 
 /* states for parsing kernel message prefix */
 typedef enum
 {
-	kParsePriorityReady,
-	kParsePriorityStarted,
-	kParsePriorityDone
+    kParsePriorityReady,
+    kParsePriorityStarted,
+    kParsePriorityDone
 }
 ParsePriorityState;
 
@@ -86,44 +86,45 @@ ParsePriorityState;
 /* global settings */
 
 /* false for no log, true for log */
-static bool		g_statusLog;
+static bool     g_statusLog;
 
 /* 0 if daemon, 1 if foreground */
-static int		g_noFork;
+static int      g_noFork;
 
 /* time to sleep before starting up */
-static int		g_startDelay;
+static int      g_startDelay;
 
 /* time to wait for syslogd before starting up */
-static int		g_syslogdDelay;
+static int      g_syslogdDelay;
 
 
 /* globals */
-static char		gOutBuff[ KLOG_MAX_LINE_LEN + 1 ];
-static int		gOutBuffPos							= 0;
-static int		gOutPriority;
-static int		gOutPriorityState;
+static char     gOutBuff[ KLOG_MAX_LINE_LEN + 1 ];
+static int      gOutBuffPos                         = 0;
+static int      gOutPriority;
+static int      gOutPriorityState;
 
 
 /**
 * @brief LogVToDebugKLog
 */
-static void LogVToDebugKLog(const char* fmt, va_list args)
+static void LogVToDebugKLog(const char *fmt, va_list args)
 {
-	const char* filePath	= "@WEBOS_INSTALL_LOGDIR@/pmklogd.log";
+	const char *filePath    = "@WEBOS_INSTALL_LOGDIR@/pmklogd.log";
 
-	FILE*			f;
-	int				err;
-	struct timeval	nowTv;
-	time_t			now;
-	char			timeStamp[ 32 ];
+	FILE           *f;
+	int             err;
+	struct timeval  nowTv;
+	time_t          now;
+	char            timeStamp[ 32 ];
 
 	f = fopen(filePath, "a");
+
 	if (f == NULL)
 	{
 		err = errno;
 		fprintf(stderr, COMPONENT_PREFIX "Failed opening pmklogd.log: %s\n",
-			strerror(err));
+		        strerror(err));
 		return;
 	}
 
@@ -151,10 +152,10 @@ static void LogVToDebugKLog(const char* fmt, va_list args)
  *
  * Bottleneck for status output.
  */
-void PrvPrint(PrvPrintType printType, const char* fmt, ...)
+void PrvPrint(PrvPrintType printType, const char *fmt, ...)
 {
 	va_list args;
-	FILE*	f;
+	FILE   *f;
 
 	va_start(args, fmt);
 
@@ -187,11 +188,11 @@ static bool WaitForSysLogD(int secsToWait)
 {
 	const int maxTries = secsToWait;
 
-	struct sockaddr_un	sunx;
-	int					i;
-	int					fd;
-	int					err;
-	int					result;
+	struct sockaddr_un  sunx;
+	int                 i;
+	int                 fd;
+	int                 err;
+	int                 result;
 
 	/* path to the unix domain socket = _PATH_LOG = /dev/log */
 	memset(&sunx, 0, sizeof(sunx));
@@ -199,9 +200,11 @@ static bool WaitForSysLogD(int secsToWait)
 	(void) strncpy(sunx.sun_path, _PATH_LOG, sizeof(sunx.sun_path));
 
 	result = -1;
+
 	for (i = 0; i < maxTries; i++)
 	{
 		fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+
 		if (fd == -1)
 		{
 			err = errno;
@@ -209,12 +212,13 @@ static bool WaitForSysLogD(int secsToWait)
 			break;
 		}
 
-		result = connect(fd, (struct sockaddr*) &sunx, sizeof(sunx));
+		result = connect(fd, (struct sockaddr *) &sunx, sizeof(sunx));
+
 		if (result != 0)
 		{
 			err = errno;
 			DbgPrint("connect %s #%d error: %s\n", sunx.sun_path, i + 1,
-				strerror(err));
+			         strerror(err));
 		}
 
 		(void) close(fd);
@@ -241,10 +245,10 @@ static bool WaitForSysLogD(int secsToWait)
 /**
  * @brief ProcessKLog
  */
-static void ProcessKLog(const char* p, int n)
+static void ProcessKLog(const char *p, int n)
 {
-	int		i;
-	char	c;
+	int     i;
+	char    c;
 
 	for (i = 0; i < n; i++)
 	{
@@ -294,6 +298,7 @@ static void ProcessKLog(const char* p, int n)
 				gOutPriorityState = kParsePriorityDone;
 				continue;
 			}
+
 			/* unexpected char, just log it */
 		}
 
@@ -341,9 +346,9 @@ static void QuitKLogD(int UNUSED(sig))
  */
 static int RunKLogD(void)
 {
-	int		err;
-	int		result;
-	char	inBuff[ KLOG_BUFFER_SIZE ];
+	int     err;
+	int     result;
+	char    inBuff[ KLOG_BUFFER_SIZE ];
 
 	(void) signal(SIGINT, QuitKLogD);
 	(void) signal(SIGTERM, QuitKLogD);
@@ -381,11 +386,11 @@ static int RunKLogD(void)
 	 * map to a pseudo-facility and have PmLogDaemon decode it on the other
 	 * side.
 	 */
-	#if 1
-		openlog("kernel", 0, PMLOGDAEMON_LOG_KERN);
-	#else
-		openlog("kernel", 0, LOG_KERN);
-	#endif
+#if 1
+	openlog("kernel", 0, PMLOGDAEMON_LOG_KERN);
+#else
+	openlog("kernel", 0, LOG_KERN);
+#endif
 
 	/* open the kernel log */
 	(void) klogctl(1, NULL, 0);
@@ -404,18 +409,20 @@ static int RunKLogD(void)
 	{
 		/* read from the kernel log */
 		result = klogctl(2, inBuff, sizeof(inBuff) - 1);
+
 		if (result < 0)
 		{
 			err = errno;
+
 			if (err == EINTR)
 			{
 				continue;
 			}
 
 			ErrPrint("klogd: error from klogctl(2): %s\n",
-				strerror(err));
+			         strerror(err));
 			syslog(LOG_ERR, "klogd: error from klogctl(2): %s",
-				strerror(err));
+			       strerror(err));
 			break;
 		}
 
@@ -443,7 +450,7 @@ static void InitSettings(void)
  */
 static void ShowUsage(void)
 {
-	printf(PMKLOGD_NAME " implements klogd (kernel logging daemon.\n" );
+	printf(PMKLOGD_NAME " implements klogd (kernel logging daemon.\n");
 	printf("\n");
 	printf("Usage: " PMKLOGD_NAME " [OPTION...]\n");
 	printf("\n");
@@ -470,13 +477,14 @@ static void SuggestHelp(void)
  * Parse the command line parameters.
  * @return result code.
  */
-static int ParseParams(int argc, char* const argv[])
+static int ParseParams(int argc, char *const argv[])
 {
-	int				i;
-	const char*		arg;
-	int				n;
+	int             i;
+	const char     *arg;
+	int             n;
 
 	i = 1;
+
 	while (i < argc)
 	{
 		arg = argv[ i ];
@@ -492,22 +500,27 @@ static int ParseParams(int argc, char* const argv[])
 		if (strcmp(arg, "-d") == 0)
 		{
 			i++;
+
 			if (i >= argc)
 			{
 				printf("Invalid parameter: -d requires value\n");
 				return RESULT_PARAM_ERR;
 			}
+
 			arg = argv[ i ];
+
 			if (!ParseInt(arg, &n))
 			{
 				n = -1;
 			}
+
 			if (!((n >= 0) && (n <= 30)))
 			{
 				printf("Invalid parameter: start delay "
-					"must be 0..30\n");
+				       "must be 0..30\n");
 				return RESULT_PARAM_ERR;
 			}
+
 			g_startDelay = n;
 			i++;
 			continue;
@@ -540,14 +553,15 @@ static int ParseParams(int argc, char* const argv[])
 /**
  * @brief main
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-	int		result;
-	int		err;
+	int     result;
+	int     err;
 
 	InitSettings();
 
 	result = ParseParams(argc, argv);
+
 	if (result != RESULT_OK)
 	{
 		if (result != RESULT_HELP)
@@ -567,7 +581,7 @@ int main(int argc, char* argv[])
 		{
 			err = errno;
 			ErrPrint("Failed daemonize (err %d, %s), exiting.\n",
-				err, strerror(err));
+			         err, strerror(err));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -584,6 +598,7 @@ int main(int argc, char* argv[])
 
 	/* service the syslog socket */
 	result = RunKLogD();
+
 	if (result != RESULT_OK)
 	{
 		exit(EXIT_FAILURE);

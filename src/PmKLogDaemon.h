@@ -44,13 +44,13 @@
 /* don't check in with this on! */
 //#define DEBUG_LOGGING
 
-#define COMPONENT_PREFIX	"pmklogd: "
+#define COMPONENT_PREFIX    "pmklogd: "
 
 typedef enum
 {
-	kPrvPrintDebug,
-	kPrvPrintInfo,
-	kPrvPrintError
+    kPrvPrintDebug,
+    kPrvPrintInfo,
+    kPrvPrintError
 }
 PrvPrintType;
 
@@ -60,30 +60,30 @@ PrvPrintType;
  *
  * Bottleneck for status output.
  */
-void PrvPrint(PrvPrintType printType, const char* fmt, ...)
-	__attribute__((format(printf, 2, 3)));
+void PrvPrint(PrvPrintType printType, const char *fmt, ...)
+__attribute__((format(printf, 2, 3)));
 
 
 #ifdef DEBUG_LOGGING
-	#define DbgPrint(...) \
-		{												\
-			PrvPrint(kPrvPrintDebug, __VA_ARGS__);		\
-		}
+#define DbgPrint(...) \
+     {                                               \
+         PrvPrint(kPrvPrintDebug, __VA_ARGS__);      \
+     }
 #else
-	#define DbgPrint(...)
+#define DbgPrint(...)
 #endif
 
 
 #define InfoPrint(...) \
-	{												\
-		PrvPrint(kPrvPrintInfo, __VA_ARGS__);		\
-	}
+    {                                               \
+        PrvPrint(kPrvPrintInfo, __VA_ARGS__);       \
+    }
 
 
 #define ErrPrint(...) \
-	{												\
-		PrvPrint(kPrvPrintError, __VA_ARGS__);		\
-	}
+    {                                               \
+        PrvPrint(kPrvPrintError, __VA_ARGS__);      \
+    }
 
 
 /*
@@ -99,7 +99,7 @@ void PrvPrint(PrvPrintType printType, const char* fmt, ...)
  * Easy to use wrapper for strcpy to make it safe against buffer
  * overflows and to report any truncations.
  */
-void mystrcpy(char* dst, size_t dstSize, const char* src);
+void mystrcpy(char *dst, size_t dstSize, const char *src);
 
 
 /**
@@ -108,7 +108,7 @@ void mystrcpy(char* dst, size_t dstSize, const char* src);
  * Easy to use wrapper for strcat to make it safe against buffer
  * overflows and to report any truncations.
  */
-void mystrcat(char* dst, size_t dstSize, const char* src);
+void mystrcat(char *dst, size_t dstSize, const char *src);
 
 
 /**
@@ -117,14 +117,14 @@ void mystrcat(char* dst, size_t dstSize, const char* src);
  * Easy to use wrapper for sprintf to make it safe against buffer
  * overflows and to report any truncations.
  */
-void mysprintf(char* dst, size_t dstSize, const char* fmt, ...)
-	__attribute__((format(printf, 3, 4)));
+void mysprintf(char *dst, size_t dstSize, const char *fmt, ...)
+__attribute__((format(printf, 3, 4)));
 
 
 /**
  * @brief ParseInt
  */
-bool ParseInt(const char* valStr, int* nP);
+bool ParseInt(const char *valStr, int *nP);
 
 
 /**
@@ -133,7 +133,7 @@ bool ParseInt(const char* valStr, int* nP);
  * Acquire the process lock (by getting a file lock on our pid file).
  * @return true on success, false if failed.
  */
-bool LockProcess(const char* component);
+bool LockProcess(const char *component);
 
 
 /**

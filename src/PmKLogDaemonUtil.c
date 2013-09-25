@@ -47,9 +47,9 @@
  * Easy to use wrapper for strcpy to make it safe against buffer
  * overflows and to report any truncations.
  */
-void mystrcpy(char* dst, size_t dstSize, const char* src)
+void mystrcpy(char *dst, size_t dstSize, const char *src)
 {
-	size_t	srcLen;
+	size_t  srcLen;
 
 	if (dst == NULL)
 	{
@@ -72,6 +72,7 @@ void mystrcpy(char* dst, size_t dstSize, const char* src)
 	}
 
 	srcLen = strlen(src);
+
 	if (srcLen >= dstSize)
 	{
 		ErrPrint("mystrcpy buffer overflow on '%s'\n", src);
@@ -89,11 +90,11 @@ void mystrcpy(char* dst, size_t dstSize, const char* src)
  * Easy to use wrapper for strcat to make it safe against buffer
  * overflows and to report any truncations.
  */
-void mystrcat(char* dst, size_t dstSize, const char* src)
+void mystrcat(char *dst, size_t dstSize, const char *src)
 {
-	size_t	dstLen;
-	size_t	srcLen;
-	size_t	maxLen;
+	size_t  dstLen;
+	size_t  srcLen;
+	size_t  maxLen;
 
 	if (dst == NULL)
 	{
@@ -108,6 +109,7 @@ void mystrcat(char* dst, size_t dstSize, const char* src)
 	}
 
 	dstLen = strlen(dst);
+
 	if (dstLen >= dstSize)
 	{
 		ErrPrint("mystrcat invalid dst len\n");
@@ -121,6 +123,7 @@ void mystrcat(char* dst, size_t dstSize, const char* src)
 	}
 
 	srcLen = strlen(src);
+
 	if (srcLen < 1)
 	{
 		/* empty string, do nothing */
@@ -149,10 +152,10 @@ void mystrcat(char* dst, size_t dstSize, const char* src)
  * Easy to use wrapper for sprintf to make it safe against buffer
  * overflows and to report any truncations.
  */
-void mysprintf(char* dst, size_t dstSize, const char* fmt, ...)
+void mysprintf(char *dst, size_t dstSize, const char *fmt, ...)
 {
-	va_list 		args;
-	int				n;
+	va_list         args;
+	int             n;
 
 	if (dst == NULL)
 	{
@@ -177,6 +180,7 @@ void mysprintf(char* dst, size_t dstSize, const char* fmt, ...)
 	va_start(args, fmt);
 
 	n = vsnprintf(dst, dstSize, fmt, args);
+
 	if (n < 0)
 	{
 		ErrPrint("mysprintf error\n");
@@ -194,13 +198,13 @@ void mysprintf(char* dst, size_t dstSize, const char* fmt, ...)
 
 typedef struct
 {
-	char	path[ PATH_MAX ];
-	int		fd;
+	char    path[ PATH_MAX ];
+	int     fd;
 }
 LockFile;
 
 
-static LockFile	g_processLock;
+static LockFile g_processLock;
 
 
 /**
@@ -209,17 +213,17 @@ static LockFile	g_processLock;
  * Acquire the process lock (by getting a file lock on our pid file).
  * @return true on success, false if failed.
  */
-bool LockProcess(const char* component)
+bool LockProcess(const char *component)
 {
-	const char* locksDirPath = "/tmp/run";
+	const char *locksDirPath = "/tmp/run";
 
-	LockFile*	lock;
-	pid_t		pid;
-	int			fd;
-	int			result;
-	char		pidStr[ 16 ];
-	int			pidStrLen;
-	int			err;
+	LockFile   *lock;
+	pid_t       pid;
+	int         fd;
+	int         result;
+	char        pidStr[ 16 ];
+	int         pidStrLen;
+	int         err;
 
 	lock = &g_processLock;
 	pid = getpid();
@@ -228,23 +232,26 @@ bool LockProcess(const char* component)
 	(void) mkdir(locksDirPath, 0777);
 
 	mysprintf(lock->path, sizeof(lock->path), "%s/%s.pid", locksDirPath,
-		component);
+	          component);
 
 	/* open or create the lock file */
 	fd = open(lock->path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+
 	if (fd < 0)
 	{
 		err = errno;
 		ErrPrint("Failed to open lock file (err %d, %s), exiting.\n",
-			err, strerror(err));
+		         err, strerror(err));
 		return false;
 	}
 
 	/* use a POSIX advisory file lock as a mutex */
 	result = lockf(fd, F_TLOCK, 0);
+
 	if (result < 0)
 	{
 		err = errno;
+
 		if ((err == EDEADLK) || (err == EAGAIN))
 		{
 			ErrPrint("Failed to acquire lock, exiting.\n");
@@ -252,29 +259,32 @@ bool LockProcess(const char* component)
 		else
 		{
 			ErrPrint("Failed to acquire lock (err %d, %s), exiting.\n",
-				err, strerror(err));
+			         err, strerror(err));
 		}
+
 		return false;
 	}
 
 	/* remove the old pid number data */
 	result = ftruncate(fd, 0);
+
 	if (result < 0)
 	{
 		err = errno;
 		DbgPrint("Failed truncating lock file (err %d, %s).\n",
-			err, strerror(err));
+		         err, strerror(err));
 	}
 
 	/* write the pid to the file to aid debugging */
 	mysprintf(pidStr, sizeof(pidStr), "%d\n", pid);
 	pidStrLen = (int) strlen(pidStr);
 	result = write(fd, pidStr, pidStrLen);
+
 	if (result < pidStrLen)
 	{
 		err = errno;
 		DbgPrint("Failed writing lock file (err %d, %s).\n",
-			err, strerror(err));
+		         err, strerror(err));
 	}
 
 	lock->fd = fd;
@@ -290,7 +300,7 @@ bool LockProcess(const char* component)
  */
 void UnlockProcess(void)
 {
-	LockFile*	lock;
+	LockFile   *lock;
 
 	lock = &g_processLock;
 	close(lock->fd);
@@ -301,14 +311,15 @@ void UnlockProcess(void)
 /**
  * @brief ParseInt
  */
-bool ParseInt(const char* valStr, int* nP)
+bool ParseInt(const char *valStr, int *nP)
 {
-	long int	n;
-	char*		endptr;
+	long int    n;
+	char       *endptr;
 
 	endptr = NULL;
 	errno = 0;
 	n = strtol(valStr, &endptr, 0);
+
 	if ((endptr == valStr) || (*endptr != 0) || (errno != 0))
 	{
 		return false;
