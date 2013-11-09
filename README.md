@@ -13,6 +13,7 @@ Below are the tools (and their minimum versions) required to build PmKLogDaemon:
 
 * cmake (version required by openwebos/cmake-modules-webos)
 * gcc 4.6.3
+* glib-2.0 2.32.4
 * make (any version)
 * openwebos/cmake-modules-webos 1.0.0 RC2
 

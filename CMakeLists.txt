@@ -28,11 +28,19 @@ include(webOS/webOS)
 webos_modules_init(1 0 0 QUALIFIER RC2)
 webos_component(2 0 0)
 
+include(FindPkgConfig)
+
+pkg_check_modules(GLIB2 REQUIRED glib-2.0)
+include_directories(${GLIB2_INCLUDE_DIRS})
+webos_add_compiler_flags(ALL ${GLIB2_CFLAGS_OTHER})
+
 include_directories(src)
 webos_add_compiler_flags(ALL -Wall -Wconversion)
 
 file(GLOB SOURCE_FILES src/*.c)
 webos_configure_source_files(SOURCE_FILES src/PmKLogDaemon.c)
 add_executable(PmKLogDaemon ${SOURCE_FILES})
+
+target_link_libraries(PmKLogDaemon ${GLIB2_LDFLAGS})
 
 webos_build_daemon()
