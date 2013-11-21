@@ -262,6 +262,7 @@ bool LockProcess(const char *component)
 			         err, strerror(err));
 		}
 
+		close(fd);
 		return false;
 	}
 
