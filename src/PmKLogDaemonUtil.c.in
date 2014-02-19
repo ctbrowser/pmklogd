@@ -215,7 +215,7 @@ static LockFile g_processLock;
  */
 bool LockProcess(const char *component)
 {
-	const char *locksDirPath = "/tmp/run";
+	const char *locksDirPath = "@WEBOS_INSTALL_LOCALSTATEDIR@/run";
 
 	LockFile   *lock;
 	pid_t       pid;

@@ -37,8 +37,7 @@ webos_add_compiler_flags(ALL ${GLIB2_CFLAGS_OTHER})
 include_directories(src)
 webos_add_compiler_flags(ALL -Wall -Wconversion)
 
-file(GLOB SOURCE_FILES src/*.c)
-webos_configure_source_files(SOURCE_FILES src/PmKLogDaemon.c)
+webos_configure_source_files(SOURCE_FILES src/PmKLogDaemon.c src/PmKLogDaemonUtil.c)
 add_executable(PmKLogDaemon ${SOURCE_FILES})
 
 target_link_libraries(PmKLogDaemon ${GLIB2_LDFLAGS})
